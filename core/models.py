@@ -28,3 +28,14 @@ class Theater(models.Model):
     name = models.CharField(max_length=255)
     address = models.CharField(max_length=255)
     owner = models.ForeignKey(BookUser, on_delete=models.CASCADE, related_name="theaters")
+    provider = models.CharField(
+        max_length=20,
+        choices=[("mk2", "MK2"), ("ugc", "UGC"), ("gaumont", "Gaumont")],#dictionaire pour les choix de provider
+        default="mk2",
+    )
+
+
+class Screening(models.Model):
+    movie_name = models.CharField(max_length=255)
+    date = models.DateTimeField()
+    theater = models.ForeignKey(Theater, on_delete=models.CASCADE, related_name="screenings")

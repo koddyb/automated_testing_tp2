@@ -1,7 +1,7 @@
 import pytest
 
-from core.tests.fixtures import user_bob, user_company
-
+from core.tests.fixtures import user_bob, user_company, theater_ugc, user_company2
+from core import models
 
 @pytest.mark.django_db
 def test_create_theater(user_company):
@@ -44,3 +44,73 @@ def test_create_theater__not_company(user_bob):
 
     # Then
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_add_screening(user_company, theater_ugc):
+    # Given
+    screening_payload = {
+        "theater_id": theater_ugc.id,
+        "movie_name": "Inception",
+        "date": "2026-12-31T20:00:00",
+    }
+
+    # When
+    response = user_company.client.post(
+        "/core/theater/screening/add/",
+        screening_payload,
+        content_type="application/json",
+    )
+
+    # Then
+    assert response.status_code == 201
+    data = response.json()
+    assert data["movie_name"] == "Inception"
+    assert data["theater_id"] == theater_ugc.id
+    assert data["id"] is not None
+
+
+@pytest.mark.django_db
+def test_cancel_screening(user_company, theater_ugc):
+    # Given : créer une séance d'abord
+    screening = models.Screening(
+        movie_name="Inception",
+        date="2026-12-31 20:00:00",
+        theater=theater_ugc,
+    )
+    screening.save()
+
+    # When
+    response = user_company.client.delete(
+        "/core/theater/screening/cancel/",
+        {"screening_id": screening.id},
+        content_type="application/json",
+    )
+
+    # Then
+    assert response.status_code == 204
+    assert not models.Screening.objects.filter(pk=screening.id).exists()
+
+
+@pytest.mark.django_db
+def test_cancel_screening__not_owner(user_company2, theater_ugc):
+    # Given : séance appartenant à UGC, tentative par MK2
+    screening = models.Screening(
+        movie_name="Inception",
+        date="2026-12-31 20:00:00",
+        theater=theater_ugc,
+    )
+    screening.save()
+
+    # When
+    response = user_company2.client.delete(
+        "/core/theater/screening/cancel/",
+        {"screening_id": screening.id},
+        content_type="application/json",
+    )
+
+    # Then
+    assert response.status_code == 403
+    # La séance n'a pas été supprimée
+    assert models.Screening.objects.filter(pk=screening.id).exists()
+

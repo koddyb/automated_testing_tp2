@@ -91,6 +91,60 @@ def login_view(request):
         return JsonResponse({"detail": "Invalid credentials"}, status=401)
 
 
+def create_screening(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "Must be authenticated"}, status=403)
+
+    book_user = request.user.bookuser
+    if not book_user.is_company:
+        return JsonResponse({"error": "Only company users can manage screenings"}, status=403)
+
+    if request.method == "POST":
+        data = json.loads(request.body)
+        try:
+            theater = models.Theater.objects.get(pk=data["theater_id"])
+        except models.Theater.DoesNotExist:
+            return JsonResponse({"error": "Theater not found"}, status=404)
+
+        if theater.owner != book_user:
+            return JsonResponse({"error": "You do not own this theater"}, status=403)
+
+        screening = models.Screening(
+            movie_name=data["movie_name"],
+            date=data["date"],
+            theater=theater,
+        )
+        screening.save()
+        return JsonResponse({
+            "id": screening.id,
+            "movie_name": screening.movie_name,
+            "date": screening.date,
+            "theater_id": theater.id,
+        }, status=201)
+
+
+def cancel_screening(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "must be authenticated"}, status=403)
+
+    book_user = request.user.bookuser
+    if not book_user.is_company:
+        return JsonResponse({"error": "only company users can manage screening"}, status=403)
+
+    if request.method == "DELETE":
+        data = json.loads(request.body)
+        try:
+            screening = models.Screening.objects.get(pk=data["screening_id"])
+        except models.Screening.DoesNotExist:
+            return JsonResponse({"error": "Screening not found"}, status=404)
+
+        if screening.theater.owner != book_user:
+            return JsonResponse({"error": "You do not own this theater"}, status=403)
+
+        screening.delete()
+        return JsonResponse({}, status=204)
+
+
 def create_theater(request):
     if not request.user.is_authenticated:
         return JsonResponse({"error": "must be authenticated"}, status=403)
