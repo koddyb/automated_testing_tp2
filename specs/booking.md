@@ -1,18 +1,17 @@
 Scenario: List movies currently showing
-  Given nothing (or an authenticated user)
+  Given nothing
   When user requests the list of movies
   Then he receives all movies that have at least one upcoming screening
 
 Scenario: List screenings for a movie
   Given a movie title
   When user requests screenings for that movie
-  Then he receives the list of theaters showing it, with dates and times
+  Then he receives the list of theaters showing it with dates and times
 
 Scenario: Book a seat
   Given authenticated user Bob, a movie name, a theater id and a scheduled date
   When Bob books a seat for that screening
-  Then we call the theater's booking API
-  And Bob receives a booking confirmation
+  Then we call the theater's booking API (now:using dispacher)
 
 Scenario: Unauthenticated user cannot book
   Given an unauthenticated user

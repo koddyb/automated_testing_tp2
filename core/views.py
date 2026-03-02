@@ -5,7 +5,42 @@ from django.http import JsonResponse
 import json
 
 from core import models
-from external_apis import mk2
+from external_apis import dispatcher
+
+
+def list_movies(request):
+    # SELECT DISTINCT movie_name FROM screening
+    movie_names = (
+        models.Screening.objects
+        .values("movie_name")
+        .distinct()
+        .order_by("movie_name")
+    )
+    return JsonResponse({"movies": [m["movie_name"] for m in movie_names]})
+
+
+def list_screenings(request):
+    movie_name = request.GET.get("movie")
+    if not movie_name:
+        return JsonResponse({"error": "movie query param required"}, status=400)
+
+    screenings = (
+        models.Screening.objects
+        .filter(movie_name=movie_name)
+        .select_related("theater")
+        .order_by("date")
+    )
+    return JsonResponse({
+        "screenings": [
+            {
+                "theater_name": s.theater.name,
+                "address": s.theater.address,
+                "date": s.date,
+            }
+            for s in screenings
+        ]
+    })
+
 
 def create_user(request):
     if request.method == "POST":
@@ -167,7 +202,7 @@ def create_theater(request):
             "address": theater.address,
         }, status=201)
 
-def book_movie(request): 
+def book_movie(request):
     if not request.user.is_authenticated:
         return JsonResponse(
             {"error": "Must be authenticated to book a seat"},
@@ -177,9 +212,14 @@ def book_movie(request):
     if request.method == "POST":
         data = json.loads(request.body)
 
+        try:
+            theater = models.Theater.objects.get(pk=data["theater_id"])
+        except models.Theater.DoesNotExist:
+            return JsonResponse({"error": "Theater not found"}, status=404)
+
         return JsonResponse(
-            mk2.book_seat(
-                theater_name="MK2 Gambetta",
+            dispatcher.book_seat(
+                theater=theater,
                 movie_name=data["movie_name"],
                 date=data["date"],
             )

@@ -48,7 +48,7 @@ def user_company(db):
     return book_user
 
 
-# fixture locale: cree une salle appartenant a  user_company
+# cree une salle appartenant a  user_company
 @pytest.fixture
 def theater_ugc(user_company, db):
     theater = models.Theater(
@@ -62,7 +62,7 @@ def theater_ugc(user_company, db):
     return theater
 
 
-# Fiture locale, un deuxième company user (non propriétaire de la salle UGC)
+# un deuxième company user (non propriétaire de la salle UGC)
 @pytest.fixture
 def user_company2(db):
     from django.test import Client
@@ -80,4 +80,28 @@ def user_company2(db):
     auth_client.force_login(user)
     book_user.client = auth_client
     return book_user
+
+
+@pytest.fixture
+def theater_mk2(user_company, db):
+    theater = models.Theater(
+        name="MK2 Gambetta",
+        address="6 Av. du Père Lachaise, 75020 Paris",
+        owner=user_company,
+        provider="mk2",
+    )
+    theater.save()
+    return theater
+
+
+@pytest.fixture
+def theater_ugc(user_company, db):
+    theater = models.Theater(
+        name="UGC Ciné Cité Paris",
+        address="30 Pl. de la République, 75011 Paris",
+        owner=user_company,
+        provider="ugc",
+    )
+    theater.save()
+    return theater
 

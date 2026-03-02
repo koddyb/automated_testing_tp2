@@ -33,6 +33,16 @@ urlpatterns = [
         name='book_movie'
     ),
     re_path(
+        r'^movies/$',
+        views.list_movies,
+        name='list_movies'
+    ),
+    re_path(
+        r'^movies/screenings/$',
+        views.list_screenings,
+        name='list_screenings'
+    ),
+    re_path(
         r'^theater/screening/add/$',
         views.create_screening,
         name='create_screening'
