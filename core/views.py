@@ -19,18 +19,22 @@ def create_user(request):
         user = models.User.objects.create_user(
             username=data['name'],
             email=data['email'],
-            password=data['password']
+            password=data['password'],
         )
         user.save()
         
         # Creating our BookUser model, saving what we want to know on user
-        book_user = models.BookUser(user=user)
+        book_user = models.BookUser(
+            user=user,
+            is_company=data.get("is_company", False),
+        )
         book_user.save()
 
         return JsonResponse({
             "username": book_user.name,
             "email": book_user.email,
             "id": book_user.id,
+            "is_company": book_user.is_company,
         }, status=201)
 
 
@@ -44,6 +48,7 @@ def get_user(request):
             "username": user.name,
             "email": user.email,
             "id": user.id,
+            "is_company": user.is_company,
         })
     except models.BookUser.DoesNotExist:
         return JsonResponse({'error':'not found'}, status=404)
@@ -63,6 +68,7 @@ def get_my_profile(request):
         "username": user.name,
         "email": user.email,
         "id": user.id,
+        "is_company": user.is_company,
     })
 
 
@@ -85,7 +91,29 @@ def login_view(request):
         return JsonResponse({"detail": "Invalid credentials"}, status=401)
 
 
-def book_movie(request):
+def create_theater(request):
+    if not request.user.is_authenticated:
+        return JsonResponse({"error": "must be authenticated"}, status=403)
+
+    book_user = request.user.bookuser
+    if not book_user.is_company:
+        return JsonResponse({"error": "Only company users can create theaters"}, status=403)
+
+    if request.method == "POST":
+        data = json.loads(request.body)
+        theater = models.Theater(
+            name=data["name"],
+            address=data["address"],
+            owner=book_user,
+        )
+        theater.save()
+        return JsonResponse({
+            "id": theater.id,
+            "name": theater.name,
+            "address": theater.address,
+        }, status=201)
+
+def book_movie(request): 
     if not request.user.is_authenticated:
         return JsonResponse(
             {"error": "Must be authenticated to book a seat"},

@@ -1,7 +1,7 @@
 Scenario: Create a theater
   Given a company user
   When user sends a theater name and address
-  Then a theater is created and linked to the company user
+  Then a theater is created
 
 Scenario: Non-company user cannot create a theater
   Given a normal user (is_company=False)

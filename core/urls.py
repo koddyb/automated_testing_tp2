@@ -32,4 +32,9 @@ urlpatterns = [
         views.book_movie,
         name='book_movie'
     ),
+    re_path(
+        r'^theater/create/$',
+        views.create_theater,
+        name='create_theater'
+    ),
 ]

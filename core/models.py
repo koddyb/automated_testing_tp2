@@ -13,6 +13,8 @@ class BookUser(models.Model):
     # Et noter BookUser pour gérer toutes les informations qu'on veut
     # enregistrer sur l'utilisateur
 
+    is_company = models.BooleanField(default=False)
+
     @property
     def name(self):
         return self.user.username
@@ -20,3 +22,9 @@ class BookUser(models.Model):
     @property
     def email(self):
         return self.user.email
+
+
+class Theater(models.Model):
+    name = models.CharField(max_length=255)
+    address = models.CharField(max_length=255)
+    owner = models.ForeignKey(BookUser, on_delete=models.CASCADE, related_name="theaters")

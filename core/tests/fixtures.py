@@ -36,6 +36,7 @@ def user_company(db):
 
     book_user = models.BookUser(
         user=user,
+        is_company=True,
     )
     book_user.save()
 
